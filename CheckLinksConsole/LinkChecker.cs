@@ -6,9 +6,9 @@ using HtmlAgilityPack;
 
 namespace CheckLinksConsole
 {
-    internal class LinkChecker
+    public class LinkChecker
     {
-        internal static IEnumerable<string> GetLinks(string page)
+        public static IEnumerable<string> GetLinks(string page)
         {
             var htmlDocument = new HtmlDocument();
             htmlDocument.LoadHtml(page);
