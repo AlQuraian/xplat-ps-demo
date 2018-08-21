@@ -1,0 +1,7 @@
+{
+    "site": "https://google.com",
+    "output": {
+        "folder": "reports",
+        "file": "report.txt"
+    }
+}
