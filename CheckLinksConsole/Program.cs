@@ -20,19 +20,7 @@ namespace CheckLinksConsole
     {
         static async Task Main(string[] args)
         {
-            var inMemory = new Dictionary<string, string>
-            {
-                {"site", "https://google.com"}
-            };
-
-            var configBuilder = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemory)
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("checksettings.json", true)
-                .AddCommandLine(args)
-                .AddEnvironmentVariables();
-            var configuration = configBuilder.Build();
-
+            var configuration = GetConfiguration(args);
             var site = configuration["site"];
             var body = await new HttpClient().GetStringAsync(site);
 
@@ -53,6 +41,22 @@ namespace CheckLinksConsole
                     await file.WriteLineAsync($"{status} - {link.Link}");
                 }
             }
+        }
+
+        private static IConfigurationRoot GetConfiguration(string[] args)
+        {
+            var inMemory = new Dictionary<string, string>
+            {
+                {"site", "https://google.com"}
+            };
+
+            var configBuilder = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemory)
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("checksettings.json", true)
+                .AddCommandLine(args)
+                .AddEnvironmentVariables();
+            return configBuilder.Build();
         }
     }
 }
