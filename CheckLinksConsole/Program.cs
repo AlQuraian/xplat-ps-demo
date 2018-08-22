@@ -5,6 +5,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace CheckLinksConsole
 {
@@ -21,17 +23,13 @@ namespace CheckLinksConsole
         static async Task Main(string[] args)
         {
             var configuration = GetConfiguration(args);
-            var site = configuration["site"];
-            var body = await new HttpClient().GetStringAsync(site);
-
-            System.Console.WriteLine();
-            System.Console.WriteLine("Links");
-            var links = LinkChecker.GetLinks(body);
-            links.ToList().ForEach(System.Console.WriteLine);
-
+            var links = await LinkChecker.GetLinks(configuration["site"]);
             var output = configuration.GetSection("output").Get<OutputSettings>();
             Directory.CreateDirectory(output.ReportDirectory);
 
+            Logs.Init(configuration);
+            var logger = Logs.Factory.CreateLogger<Program>();
+            logger.LogInformation($"Saving report to {output.ReportFilePath}");
             var checkedLinks = await LinkChecker.Check(links);
             using (var file = File.CreateText(output.ReportFilePath))
             {
@@ -50,13 +48,12 @@ namespace CheckLinksConsole
                 {"site", "https://google.com"}
             };
 
-            var configBuilder = new ConfigurationBuilder()
+            return new ConfigurationBuilder()
                 .AddInMemoryCollection(inMemory)
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("checksettings.json", true)
+                .AddJsonFile("checksettings.json", optional: false)
                 .AddCommandLine(args)
-                .AddEnvironmentVariables();
-            return configBuilder.Build();
+                .AddEnvironmentVariables().Build();
         }
     }
 }

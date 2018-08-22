@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using CheckLinksConsole;
 using Xunit;
 
@@ -8,19 +9,10 @@ namespace CheckLinksTests
     public class CheckLinksShould
     {
         [Fact]
-        public void NotParseAnyLink()
+        public async Task ExtractedALink()
         {
-            var links = LinkChecker.GetLinks("<a href=\"google.com\">Google</a>");
-            links.Count().Equals(0);
-        }
-
-        [Fact]
-        public void ParseOneLink()
-        {
-            var url = "http://google.com";
-            var links = LinkChecker.GetLinks($"<a href=\"{url}\">Google</a>");
-            links.Count().Equals(1);
-            Assert.Equal(url, links.First());
+            var links = await LinkChecker.GetLinks("https://google.com");
+            Assert.True(links.Count() > 0);
         }
     }
 }

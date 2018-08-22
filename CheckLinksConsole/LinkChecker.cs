@@ -4,17 +4,29 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace CheckLinksConsole
 {
     public class LinkChecker
     {
-        public static IEnumerable<string> GetLinks(string page)
+        private static readonly ILogger<LinkChecker> Logger = Logs.Factory.CreateLogger<LinkChecker>();
+
+        public static async Task<IEnumerable<string>> GetLinks(string url)
         {
+            var body = await new HttpClient().GetStringAsync(url);
             var htmlDocument = new HtmlDocument();
-            htmlDocument.LoadHtml(page);
-            var links = htmlDocument.DocumentNode.SelectNodes("//a[@href]")
+            htmlDocument.LoadHtml(body);
+            var originalLinks = htmlDocument.DocumentNode.SelectNodes("//a[@href]")
             .Select(n => n.GetAttributeValue("href", string.Empty))
+            .ToList();
+
+            using (Logger.BeginScope($"Links for {url}"))
+            {
+                originalLinks.ForEach(l => Logger.LogTrace(eventId: 100, l));
+            }
+
+            var links = originalLinks
             .Where(l => !string.IsNullOrWhiteSpace(l))
             .Where(l => l.StartsWith("http"));
 
@@ -47,6 +59,7 @@ namespace CheckLinksConsole
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogTrace(0, ex, "Faild to retrieve {link}", link);
                     return ex.Message;
                 }
             }

@@ -1,5 +1,11 @@
 {
-    "site": "https://google.com",
+    "Logging": {
+        "IncludeScopes": true,
+        "LogLevel": {
+            "Default": "Trace"
+        }
+    },
+    "site": "https://g0t4.github.io/pluralsight-dotnet-core-xplat-apps/",
     "output": {
         "folder": "reports",
         "file": "report.txt"
