@@ -1,17 +1,16 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+
+using Microsoft.EntityFrameworkCore;
 
 namespace CheckLinksConsole
 {
-    public static class Logs
+    public class LinksDb : DbContext
     {
-        public static LoggerFactory Factory = new LoggerFactory();
+        public DbSet<LinkCheckResult> Links { get; set; }
 
-        public static void Init(IConfiguration configuration)
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            // Factory.AddConsole(minLevel: LogLevel.Trace, includeScopes: true);
-            Factory.AddConsole(configuration.GetSection("Logging"));
-            Factory.AddFile("logs/checklinks-{Date}.txt", minimumLevel: LogLevel.Trace);
+            var connection = "Server=(localdb)\\mssqllocaldb;Database=LinksDb;Trusted_Connection=True;MultipleActiveResultSets=true";
+            optionsBuilder.UseSqlServer(connection);
         }
     }
 }

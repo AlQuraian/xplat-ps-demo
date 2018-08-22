@@ -70,9 +70,11 @@ namespace CheckLinksConsole
 
     public class LinkCheckResult
     {
+        public int Id { get; set; }
         public bool Exists => string.IsNullOrWhiteSpace(Problem);
         public bool IsMissing => !Exists;
         public string Problem { get; set; }
         public string Link { get; set; }
+        public DateTime CheckedAt { get; set; } = DateTime.UtcNow;
     }
 }

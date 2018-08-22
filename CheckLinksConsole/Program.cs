@@ -30,14 +30,18 @@ namespace CheckLinksConsole
             Logs.Init(configuration);
             var logger = Logs.Factory.CreateLogger<Program>();
             logger.LogInformation($"Saving report to {output.ReportFilePath}");
+
             var checkedLinks = await LinkChecker.Check(links);
             using (var file = File.CreateText(output.ReportFilePath))
+            using (var linksDb = new LinksDb())
             {
                 foreach (var link in checkedLinks.OrderBy(l => l.Exists))
                 {
                     var status = link.IsMissing ? "Missing" : "Ok";
                     await file.WriteLineAsync($"{status} - {link.Link}");
+                    await linksDb.AddAsync(link);
                 }
+                await linksDb.SaveChangesAsync();
             }
         }
 
