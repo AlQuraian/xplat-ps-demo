@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
+using Hangfire;
+using Hangfire.MemoryStorage;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Serilog;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore;
 
 namespace CheckLinksConsole
 {
-    class OutputSettings
+    public class OutputSettings
     {
         public string Folder { get; set; }
         public string File { get; set; }
@@ -20,28 +19,25 @@ namespace CheckLinksConsole
 
     class Program
     {
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
-            var configuration = GetConfiguration(args);
-            var links = await LinkChecker.GetLinks(configuration["site"]);
-            var output = configuration.GetSection("output").Get<OutputSettings>();
-            Directory.CreateDirectory(output.ReportDirectory);
+            var appConfig = GetConfiguration(args);
+            Logs.Init(appConfig);
 
-            Logs.Init(configuration);
-            var logger = Logs.Factory.CreateLogger<Program>();
-            logger.LogInformation($"Saving report to {output.ReportFilePath}");
+            GlobalConfiguration.Configuration.UseMemoryStorage();
 
-            var checkedLinks = await LinkChecker.Check(links);
-            using (var file = File.CreateText(output.ReportFilePath))
-            using (var linksDb = new LinksDb())
+            RecurringJob.AddOrUpdate<CheckLinkJob>("check-links", j => j.Execute(appConfig["site"], appConfig.GetSection("output").Get<OutputSettings>()), Cron.Minutely);
+            RecurringJob.Trigger("check-links");
+
+            var host = WebHost.CreateDefaultBuilder(args).UseStartup<Startup>();
+
+            using (var server = new BackgroundJobServer())
             {
-                foreach (var link in checkedLinks.OrderBy(l => l.Exists))
-                {
-                    var status = link.IsMissing ? "Missing" : "Ok";
-                    await file.WriteLineAsync($"{status} - {link.Link}");
-                    await linksDb.AddAsync(link);
-                }
-                await linksDb.SaveChangesAsync();
+                // System.Console.WriteLine("Hangfire Server started. Press any key to exit...");
+                // Console.ReadKey();
+
+                System.Console.WriteLine("Hangfire Server started.");
+                host.Build().Run();
             }
         }
 
