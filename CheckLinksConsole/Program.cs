@@ -26,19 +26,14 @@ namespace CheckLinksConsole
 
             GlobalConfiguration.Configuration.UseMemoryStorage();
 
-            RecurringJob.AddOrUpdate<CheckLinkJob>("check-links", j => j.Execute(appConfig["site"], appConfig.GetSection("output").Get<OutputSettings>()), Cron.Minutely);
+            var host = WebHost.CreateDefaultBuilder(args).UseStartup<Startup>();
+            var settings = appConfig.GetSection("output").Get<OutputSettings>();
+            var site = appConfig["site"];
+
+            RecurringJob.AddOrUpdate<CheckLinkJob>("check-links", j => j.Execute(site, settings), Cron.Minutely);
             RecurringJob.Trigger("check-links");
 
-            var host = WebHost.CreateDefaultBuilder(args).UseStartup<Startup>();
-
-            using (var server = new BackgroundJobServer())
-            {
-                // System.Console.WriteLine("Hangfire Server started. Press any key to exit...");
-                // Console.ReadKey();
-
-                System.Console.WriteLine("Hangfire Server started.");
-                host.Build().Run();
-            }
+            host.Build().Run();
         }
 
         private static IConfigurationRoot GetConfiguration(string[] args)
